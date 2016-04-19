@@ -1,0 +1,87 @@
+From 41e5f17057621cd5af29ffd635bbcc891d3a0a6a Mon Sep 17 00:00:00 2001
+From: Wang Long <long.wanglong@huawei.com>
+Date: Tue, 19 Apr 2016 11:30:30 +0800
+Subject: [PATCH] Modify the test_11_environment to work with multiple
+ architectures
+
+Signed-off-by: Wang Long <long.wanglong@huawei.com>
+---
+ tests/integration/assets/test_11/cloud-config_arm.yml  | 18 ++++++++++++++++++
+ .../integration/assets/test_11/cloud-config_arm64.yml  | 18 ++++++++++++++++++
+ tests/integration/rostest/test_11_environment.py       |  6 ++++--
+ 3 files changed, 40 insertions(+), 2 deletions(-)
+ create mode 100644 tests/integration/assets/test_11/cloud-config_arm.yml
+ create mode 100644 tests/integration/assets/test_11/cloud-config_arm64.yml
+
+diff --git a/tests/integration/assets/test_11/cloud-config_arm.yml b/tests/integration/assets/test_11/cloud-config_arm.yml
+new file mode 100644
+index 0000000..87b8145
+--- /dev/null
++++ b/tests/integration/assets/test_11/cloud-config_arm.yml
+@@ -0,0 +1,18 @@
++#cloud-config
++rancher:
++  environment:
++    A: A
++    BB: BB
++    BC: BC
++  services:
++    env:
++      image: armhf/busybox
++      command: env
++      labels:
++        io.rancher.os.scope: system
++        io.rancher.os.before: console
++      environment:
++        - A
++        - B*
++ssh_authorized_keys:
++  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDUlsWAL5Rf0Wis/A7k7Tlqx0fZS60VzCZrPZYbP/wkL95jv0XzCx8bd1rZHeybblHPDNpND3BLv4qPY5DxRyexF4seGuzcJI/pOvGUGjQondeMPgDTFEo5w939gSdeTZcfXzQ0wAVhzwDbgH4zPfMzbdoo8Aiu9jkKljXw8IFju0gh+t6iKkGZCIjKT9o7zza1vGfkodhvi2V3VzPdNO28gaxZaRNtmBYUoVnGyR6nXN1Q3CJaVuh5o6GPCOqrhHNbYOFZKBpDiHbxPhVpxHQD2+8yUSGTG7WW75FfZePja5y8d0c/O5L37ZYx4AZAd3KgQYDBT2XCEJGQNawNbfpt
+diff --git a/tests/integration/assets/test_11/cloud-config_arm64.yml b/tests/integration/assets/test_11/cloud-config_arm64.yml
+new file mode 100644
+index 0000000..362e577
+--- /dev/null
++++ b/tests/integration/assets/test_11/cloud-config_arm64.yml
+@@ -0,0 +1,18 @@
++#cloud-config
++rancher:
++  environment:
++    A: A
++    BB: BB
++    BC: BC
++  services:
++    env:
++      image: aarch64/busybox
++      command: env
++      labels:
++        io.rancher.os.scope: system
++        io.rancher.os.before: console
++      environment:
++        - A
++        - B*
++ssh_authorized_keys:
++  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDUlsWAL5Rf0Wis/A7k7Tlqx0fZS60VzCZrPZYbP/wkL95jv0XzCx8bd1rZHeybblHPDNpND3BLv4qPY5DxRyexF4seGuzcJI/pOvGUGjQondeMPgDTFEo5w939gSdeTZcfXzQ0wAVhzwDbgH4zPfMzbdoo8Aiu9jkKljXw8IFju0gh+t6iKkGZCIjKT9o7zza1vGfkodhvi2V3VzPdNO28gaxZaRNtmBYUoVnGyR6nXN1Q3CJaVuh5o6GPCOqrhHNbYOFZKBpDiHbxPhVpxHQD2+8yUSGTG7WW75FfZePja5y8d0c/O5L37ZYx4AZAd3KgQYDBT2XCEJGQNawNbfpt
+diff --git a/tests/integration/rostest/test_11_environment.py b/tests/integration/rostest/test_11_environment.py
+index 6172925..01f36cf 100644
+--- a/tests/integration/rostest/test_11_environment.py
++++ b/tests/integration/rostest/test_11_environment.py
+@@ -3,12 +3,14 @@ import rostest.util as u
+ from rostest.util import SSH
+ 
+ ssh_command = ['./scripts/ssh', '--qemu', '--key', './tests/integration/assets/test.key']
+-cloud_config_path = './tests/integration/assets/test_11/cloud-config.yml'
++cloud_config_path = {'amd64': './tests/integration/assets/test_11/cloud-config.yml',
++                     'arm': './tests/integration/assets/test_11/cloud-config_arm.yml',
++                     'arm64': './tests/integration/assets/test_11/cloud-config_arm64.yml'}
+ 
+ 
+ @pytest.fixture(scope="module")
+ def qemu(request):
+-    q = u.run_qemu(request, ['--cloud-config', cloud_config_path])
++    q = u.run_qemu(request, ['--cloud-config', cloud_config_path[u.arch]])
+     u.flush_out(q.stdout)
+     return q
+ 
+-- 
+1.9.1
+
